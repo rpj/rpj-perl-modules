@@ -134,7 +134,7 @@ sub _isConfigValid
 sub _init 
 {
 	my $self = shift;
-	my $configFile = $self->{'config-file-path'};
+	my $configFile = $self->{oconfig}->{ConfigFilePath};
 	
 	$self->{'config-is-valid'} = 0;
 	$self->{'error-string'} = "Undefined error";
@@ -206,7 +206,6 @@ sub new
 
 	bless ($self, $cls);
 	$self->{oconfig} = (defined($conf{ConfigHashRef}) ? $conf{ConfigHashRef} : { %conf });
-	$self->{'config-file-path'} = $self->{oconfig}->{ConfigFilePath};
 
 	return $self->_init();
 }
