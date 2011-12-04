@@ -4,7 +4,7 @@ use threads;
 use POSIX qw(strftime);
 use Exporter qw(import);
 
-@EXPORT = qw(pdebug pdebugl qprint debugLevel);
+our @EXPORT_OK = qw(pdebug pdebugl qprint debugLevel ddump ddumpl);
 
 our $__DEBUG = 2;
 
@@ -25,6 +25,20 @@ sub pdebug($) {
 sub pdebugl($$) {
     my ($level, $str) = @_;
     pdebug($str), if ($level <= $__DEBUG);
+}
+
+sub ddump {
+	my $dump = shift;
+	my $from = shift;
+	eval {
+		require Data::Dumper;
+		pdebug("Debug Dump" . (defined($from) ? " ('$from') " : "") . ":\n" . Data::Dumper::Dumper($dump));
+	};
+}
+
+sub ddumpl {
+	my ($level, $dump, $from) = @_;
+	dump($dump, $from), if ($level <= $__DEBUG);
 }
 
 sub setDebugLevel {
