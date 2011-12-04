@@ -50,33 +50,28 @@ sub _action_stop
 	my $self = shift;
 	my $output = "";
 	
-	my $tk = $server->{'toolkit'};
+	my $t = Net::Telnet->new(Timeout => 120);
+	$t->telnetmode(0);
 
-	if (defined($tk))
+	if (($t->open(Host => 'localhost', Port => int($self->{config}->{ToolkitPort})) == 1))
 	{
-		my $t = Net::Telnet->new(Timeout => 120);
-		$t->telnetmode(0);
+		$t->waitfor('/Minecraft\s+RemoteShell.*$/');
+		$t->waitfor('/Enter\s+username:\s+/');
+		$t->print("$self->{config}->{ToolkitUser}");
 
-		if (($t->open(Host => 'localhost', Port => int($self->{config}->{ToolkitPort})) == 1))
-		{
-			$t->waitfor('/Minecraft\s+RemoteShell.*$/');
-			$t->waitfor('/Enter\s+username:\s+/');
-			$t->print("$self->{config}->{ToolkitUser}");
+		$t->waitfor('/Enter\s+password:\s+/');
+		$t->print("$self->{config}->{ToolkitPass}");
 
-			$t->waitfor('/Enter\s+password:\s+/');
-			$t->print("$self->{config}->{ToolkitPass}");
+		$t->waitfor('/Connected to console!/');
+		$t->print("$RTSTOPCMD");
 
-			$t->waitfor('/Connected to console!/');
-			$t->print("$RTSTOPCMD");
-
-			$t->waitfor('/.*\[INFO\]\s+Stopping\s+server/');
-			$output = "Stoped server $self->{config}->{ServerName} at " .
-				"rt-port $self->{config}->{ToolkitPort} successfully.\n";
-		}
-		else
-		{
-			$output = "Cannot connect to remote toolkit for $self->{config}->{ServerName}\n\n";
-		}
+		$t->waitfor('/.*\[INFO\]\s+Stopping\s+server/');
+		$output = "Stoped server $self->{config}->{ServerName} at " .
+			"rt-port $self->{config}->{ToolkitPort} successfully.\n";
+	}
+	else
+	{
+		$output = "Cannot connect to remote toolkit for $self->{config}->{ServerName}\n\n";
 	}
 	
 	return $output;

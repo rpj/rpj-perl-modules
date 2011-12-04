@@ -14,7 +14,7 @@ sub _init
 	$self->{ReqdKeysArrRef} = [ "$RPJ::Config::REQD_WILDCARD > 0" ];
 	my $tarrref = [];
 
-	push(@$tarrref, $ckey), foreach my $ckey (keys(@{$DEFS->{ConfigKeys}}));
+	foreach my $ckey (keys(%{$DEFS->{ConfigKeys}})) { push(@$tarrref, $ckey); }
 	$self->SUPER::setReqdKeys($tarrref);
 
 	return $self;

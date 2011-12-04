@@ -6,8 +6,9 @@ use Exporter qw(import);
 use Scalar::Util qw(reftype);
 use JSON;
 use Data::Dumper;
-use RPJ::Debug;
+use RPJ::Debug qw(pdebug ddump pdebugl);
 
+our $REQD_WILDCARD = '_WC_';
 our @EXPORT = qw($REQD_WILDCARD);
 
 # TODO: differentiate between hash and arrays in the wildcard spec, because w/o
@@ -20,8 +21,6 @@ our @EXPORT = qw($REQD_WILDCARD);
 	[ 'map-renderers', "$REQD_WILDCARD > 0", [ 'path', 'exec-name', 'cmd-line' ] ]	
 ];
 =cut
-
-my $REQD_WILDCARD = '_WC_';
 
 sub _setErrorString
 {
@@ -39,6 +38,7 @@ sub _isConfigValid
 	my $chrt = reftype($ch);
 
 	pdebug "RPJ::Config::_isConfigValid($ch) starting...\n";
+	ddump($ch, "ch");
 	
 	return 0, unless (reftype($reqdarr) eq 'ARRAY');
 	
@@ -92,7 +92,6 @@ sub _isConfigValid
 			}
 			else
 			{
-				pdebug "For spec '$vspec' -> '$ch->{$vspec}'\n";
 				unless (defined($ch->{$vspec}))
 				{
 					$self->_setErrorString("Required configuration key '$vspec' (scalar) was not found.");
@@ -131,13 +130,41 @@ sub _isConfigValid
 	return 1;
 }
 
+sub _completeConfigFromDefaults
+{
+	my $self = shift;
+	my $config = $self->{config};
+	my $defs = $self->{oconfig}->{Defaults};
+
+	ddump($defs, "defs");
+
+	if (defined($defs))
+	{
+		foreach my $dkey (keys(%{$defs}))
+		{
+			$config->{$dkey} = $defs->{$dkey}, unless(defined($config->{$dkey}));
+		}
+	}
+	else
+	{
+		$self->_setErrorString("$self\->_completeConfigFromDefaults: defs not defined");
+	}
+}
+
+sub _runValidation
+{
+	my $self = shift;
+	$self->_completeConfigFromDefaults();
+	$self->{'config-is-valid'} = $self->_isConfigValid($self->{'config'}, $self->{ReqdConfKeys});
+}
+
 sub _init 
 {
 	my $self = shift;
-	my $configFile = $self->{oconfig}->{ConfigFilePath};
+	my $configFile = $self->{'config-file-path'} = $self->{oconfig}->{ConfigFilePath};
 	
 	$self->{'config-is-valid'} = 0;
-	$self->{'error-string'} = "Undefined error";
+	$self->{'error-string'} = "No error";
 	
 	$self->{ReqdConfKeys} = $self->{oconfig}->{ReqdConfKeys};
 
@@ -165,7 +192,7 @@ sub _init
 	if (!$@)
 	{
 		# if everything was successful to this point, determine if the configuration is valid as spec'ed
-		$self->{'config-is-valid'} = $self->_isConfigValid($self->{'config'}, $self->{ReqdConfKeys});
+		$self->_runValidation(), if (defined($self->{ReqdConfKeys}));
 	}
 	else
 	{
@@ -173,6 +200,11 @@ sub _init
 	}
 
 	return $self;
+}
+
+sub configRef
+{
+	return (shift)->{config};
 }
 
 sub valueForKey
@@ -196,6 +228,7 @@ sub setReqdKeys
 	my $reqd_keys = shift;
 	
 	$self->{ReqdConfKeys} = $reqd_keys;
+	$self->_runValidation();
 }
 
 sub new 
