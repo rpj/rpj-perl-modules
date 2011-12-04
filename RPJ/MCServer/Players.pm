@@ -2,7 +2,7 @@ package RPJ::MCServer::Players;
 
 use RPJ::MCServer::Defaults;
 use RPJ::MCServer::Outputer;
-use RPJ::Debug qw(pdebug);
+use RPJ::Debug qw(pdebug ddump);
 use parent 'RPJ::MCServer::Outputer';
 use strict;
 use warnings;
@@ -47,7 +47,7 @@ sub _checkAndSetLeaderboard {
 
 	my $chkval = $self->{m}->{ahash}->{'leaderboard'}->{$key}->{'value'};
 	
-	if (defined($uh->{$key}) && defined($chkval) && $uh->{$key} > $chkval) {
+	if (defined($uh->{$key}) && (!defined($chkval) || (defined($chkval) && $uh->{$key} > $chkval))) {
 		$self->{m}->{ahash}->{'leaderboard'}->{$key} = { 'value' => $uh->{$key}, 'user' => $un };
 	}
 }
