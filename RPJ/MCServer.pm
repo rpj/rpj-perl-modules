@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use RPJ::MCServer::Defaults;
-use RPJ::Debug;
+use RPJ::Debug qw(pdebug ddump);
 
 our @EXPORT = qw();
 
@@ -15,7 +15,7 @@ my $cmds = {
 		'regexValues' => [ 'Uptime', 'LoadAvg1Min', 'LoadAvg5Min', 'LoadAvg15Min' ]
 	},
 	'CPUAndMem' => {
-		'command' => '/bin/ps aux | /bin/grep java',
+		'command' => '/bin/ps aux | /bin/grep -e "java.*nogui"',
 		'regex' => qr/root\s+\d+\s+(\d+\.\d+)\s+(\d+\.\d+).*?(\d+\:\d+)\s+java.*?/,
 		'regexValues' => ['CPU', 'Memory']
 	}
@@ -70,11 +70,14 @@ sub getInfo
 
 	foreach my $cmdName (keys(%{$cmds})) {
 		my $cmd = $cmds->{$cmdName}->{'command'};
+		pdebug "$self\->getInfo: \$cmd = $cmd\n";
 
 		if (defined($cmd) && length($cmd)) {
 			my $output = qx/$cmd/;
+			pdebug "output:\n$output\n";
 			my $regex = $cmds->{$cmdName}->{'regex'};
 			my $rxVals = $cmds->{$cmdName}->{'regexValues'};
+			pdebug "regex: $regex\trxVals: $rxVals\n";
 
 			if ($output =~ /$regex/ig) {
 				$stats->{$cmdName} = {};
@@ -82,7 +85,8 @@ sub getInfo
 				for (my $i = 0; $i < scalar(@{$rxVals}); $i++) {
 					my $rxVal;
 					my $rxInd = $i + 1;
-					eval { $rxVal = $$rxInd };
+					eval "\$rxVal = \$$rxInd";
+					pdebug "post-eval for $rxInd: $rxVal\n";
 					$stats->{$cmdName}->{$rxVals->[$i]} = $rxVal;
 				}
 			}
@@ -90,6 +94,8 @@ sub getInfo
 		}
 		else { print STDERR "No command defined for '$cmdName'!\n"; }
 	}
+
+	ddump($stats, "$self\->getInfo()");
 	
 	if (defined($args{type}) && $args{type} eq $DEFS->{TypeNames}->{ASCII})
 	{
