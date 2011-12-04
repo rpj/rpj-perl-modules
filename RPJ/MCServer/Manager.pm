@@ -5,12 +5,14 @@ use warnings;
 use Exporter qw(import);
 use Net::Telnet ();
 use RPJ::MCServer::Defaults;
+use RPJ::Debug qw(pdebug ddump);
 
 our @EXPORT = ();
 our @EXPORT_OK = ();
 
 my $RTSTOPCMD = '.stopwrapper';
 my $SCREEN = `which screen` || '/usr/bin/screen';
+chomp($SCREEN);
 my $SCREENRCTEMPLATE = <<__SRCDOC__;
 screen -t server-console bash
 shell -bash
@@ -26,11 +28,13 @@ sub _action_start
 	my $screenrc = $screenrctemplate;
 
 	my $dir = $self->{config}->{ServerRoot};
-	my $cmd = "$self->{config}->{ServerRoot}/$self->{config}->{ServerCmdRelPath}";
+	my $cmd = $self->{config}->{ServerCmdRelPath};
 	my $name = $self->{config}->{ServerName};
 
 	$screenrc =~ s/\<GAMEDIR\>/$dir/g;
 	$screenrc =~ s/\<GAMESCRIPT\>/$cmd/g;
+
+	`mkdir -p $self->{config}->{ManagerRunPath}`, unless (-d $self->{config}->{ManagerRunPath});
 
 	my $rcname = "$self->{config}->{ManagerRunPath}/.${name}.screenrc";
 	print "Creating $rcname...\n";
@@ -38,7 +42,7 @@ sub _action_start
 	print RC $screenrc;
 	close (RC);
 
-	my $cmdstr = "$SCREEN -S '$name -c $rcname -d -m";
+	my $cmdstr = "$SCREEN -S $name -c $rcname -d -m";
 	print "Launching '$cmdstr'\n";
 	`$cmdstr`;
 
@@ -66,12 +70,16 @@ sub _action_stop
 		$t->print("$RTSTOPCMD");
 
 		$t->waitfor('/.*\[INFO\]\s+Stopping\s+server/');
-		$output = "Stoped server $self->{config}->{ServerName} at " .
-			"rt-port $self->{config}->{ToolkitPort} successfully.\n";
+		$output = "Stoped server '$self->{config}->{ServerName}' at toolkit " .
+			"port $self->{config}->{ToolkitPort} successfully.\n";
+		
+		# kill off the screen session, assuming no other windows had been added
+		`$SCREEN -D '$self->{config}->{ServerName}'`;
 	}
 	else
 	{
-		$output = "Cannot connect to remote toolkit for $self->{config}->{ServerName}\n\n";
+		$output = "Cannot connect to $self->{config}->{ServerName} remote toolkit ".
+				"on port $self->{config}->{ToolkitPort}\n\n";
 	}
 	
 	return $output;
@@ -80,20 +88,31 @@ sub _action_stop
 sub _action__default
 {
 	my $self = shift;
-	return "Running screens:\n\n" . `$SCREEN -ls`;
+	my $rv = "Running screens ($SCREEN):\n\n";
+	$rv .= `$SCREEN -ls`;
+	return $rv;
 }
 
 sub runAction
 {
 	my $self = shift;
-	my $action = shift;
-	my $output = "$0::$self running '$action' action at " . scalar(localtime()) . "\n";
+	my $action = shift || "";
+	ddump($self, "$self -> runAction");
+	my $output = "RPJ::MCServer::Manager(name='$self->{config}->{ServerName}') running action ".
+		"'$action' at " . scalar(localtime()) . "\n";
+	pdebug($output);
 	
-	eval "\$output .= &\$self->$action()";
-	$output .= $self->_action__default(), if ($@);
+	$action = "_default", unless ($action && length($action));
+
+	my $evalstr = "\$output .= \$self->_action_${action}()";
+	pdebug("evalstr -> $evalstr\n");
+	eval "$evalstr";
+	print "ERROR running action '$action': $@", if ($@);
 	
 	return $output;
 }
+
+sub _init { return (shift); }
 
 sub new
 {

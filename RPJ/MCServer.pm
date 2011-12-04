@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use RPJ::MCServer::Defaults;
+use RPJ::MCServer::Config;
 use RPJ::Debug qw(pdebug ddump);
 
 our @EXPORT = qw();
@@ -21,24 +22,21 @@ my $cmds = {
 	}
 };
 
-sub _completeConfigFromDefaults($$)
-{
-	my $self = shift;
-	my $config = $self->{config};
-	
-	foreach my $dkey (keys(%{$DEFS->{ConfigKeys}}))
-	{
-		$config->{$dkey} = $DEFS->{ConfigKeys}->{$dkey}, unless(defined($config->{$dkey}));
-	}
-}
-
 sub _init
 {
 	my $self = shift;
 
 	if (defined($self->{config}))
 	{
-		$self->_completeConfigFromDefaults();
+		$self->{ConfigObj} = RPJ::MCServer::Config->new(
+			ConfigHashRef => $self->{config},
+			Defaults => $RPJ::MCServer::Defaults::DEFS->{ConfigKeys}
+		);
+		
+		if ($self->{ConfigObj}->_isConfigValid())
+		{
+			$self->{config} = $self->{ConfigObj}->configRef();
+		}
 	}
 	else
 	{
@@ -103,6 +101,18 @@ sub getInfo
 	}
 	
 	return ((!defined($args{type}) || $args{refOK}) ? $stats : $self->SUPER::genOutput(type => $args{type}, data => $stats));
+}
+
+sub getManager
+{
+	my $self = shift;
+
+	if (!defined($self->{ManagerObj}))
+	{
+		$self->{ManagerObj} = RPJ::MCServer::Manager->new(ConfigHashRef => $self->{config});
+	}
+
+	return $self->{ManagerObj};
 }
 
 sub new

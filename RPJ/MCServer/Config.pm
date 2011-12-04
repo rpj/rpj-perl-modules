@@ -11,25 +11,12 @@ sub _init
 {
 	my $self = (shift)->SUPER::_init();
 
-	$self->{ReqdKeysArrRef} = [ "$RPJ::Config::REQD_WILDCARD > 0" ];
 	my $tarrref = [];
 
 	foreach my $ckey (keys(%{$DEFS->{ConfigKeys}})) { push(@$tarrref, $ckey); }
 	$self->SUPER::setReqdKeys($tarrref);
 
 	return $self;
-}
-
-sub new 
-{
-	my $cls = shift;
-	my %conf = @_;
-	my $self = {};
-
-	bless ($self, $cls);
-	$self->{oconfig} = (defined($conf{ConfigHashRef}) ? $conf{ConfigHashRef} : { %conf });
-
-	return $self->_init();
 }
 
 1;

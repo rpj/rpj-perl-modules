@@ -37,9 +37,9 @@ sub _isConfigValid
 	my $lastkey = shift;
 	my $chrt = reftype($ch);
 
-	pdebug "RPJ::Config::_isConfigValid($ch) starting...\n";
-	ddump($ch, "ch");
+	pdebug "$self\::_isConfigValid() starting...\n";
 	
+	return 1, if ($self->{'config-is-valid'});
 	return 0, unless (reftype($reqdarr) eq 'ARRAY');
 	
 	if (!defined($self->{ReqdConfKeys}))
@@ -134,9 +134,7 @@ sub _completeConfigFromDefaults
 {
 	my $self = shift;
 	my $config = $self->{config};
-	my $defs = $self->{oconfig}->{Defaults};
-
-	ddump($defs, "defs");
+	my $defs = $self->{Defaults};
 
 	if (defined($defs))
 	{
@@ -144,10 +142,6 @@ sub _completeConfigFromDefaults
 		{
 			$config->{$dkey} = $defs->{$dkey}, unless(defined($config->{$dkey}));
 		}
-	}
-	else
-	{
-		$self->_setErrorString("$self\->_completeConfigFromDefaults: defs not defined");
 	}
 }
 
@@ -239,6 +233,7 @@ sub new
 
 	bless ($self, $cls);
 	$self->{oconfig} = (defined($conf{ConfigHashRef}) ? $conf{ConfigHashRef} : { %conf });
+	$self->{Defaults} = $conf{Defaults}, if (defined($conf{Defaults}));
 
 	return $self->_init();
 }
