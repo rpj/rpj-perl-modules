@@ -186,7 +186,7 @@ sub getUser {
 	return $self->{m}->{uhash}->{$user};
 }
 
-sub getStats
+sub getInfo
 {
 	my $self = shift;
 	my %args = @_;
