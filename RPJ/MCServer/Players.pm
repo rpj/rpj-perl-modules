@@ -200,7 +200,10 @@ sub getInfo
 	
 	my $stats = { aggregate => $self->{m}->{ahash}, perUser => $self->{m}->{uhash} };
 	
-	$args{type} = $self->{config}->{OutputType}, if (defined($self->{config}->{OutputType}) && !defined($args{type}));
+	if (!$args{forceRef}) {
+		$args{type} = $self->{config}->{OutputType}, 
+			if (defined($self->{config}->{OutputType}) && !defined($args{type}));
+	}
 	
 	if (defined($args{type}) && $args{type} eq $DEFS->{TypeNames}->{ASCII})
 	{
@@ -225,6 +228,8 @@ sub getInfo
 		$stats .= "-------------------+-------------------+------------------------+------------------------\n";
 	}
 	
+	# so ugly... so lazy
+	return $stats, if ($args{forceRef}); 
 	return ((!defined($args{type}) || $args{refOK}) ? $stats : $self->SUPER::genOutput(type => $args{type}, data => $stats));
 }
 
