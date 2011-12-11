@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use Net::Telnet ();
+use RPJ::MCServers;
+use RPJ::MCServer;
+use RPJ::MCServer::Players;
 use RPJ::MCServer::Defaults;
 use RPJ::Debug qw(pdebug ddump);
 
@@ -19,6 +22,25 @@ shell -bash
 chdir <GAMEDIR>
 exec <GAMEDIR>/<GAMESCRIPT>
 __SRCDOC__
+
+# problem! this is one-per-server. the shutdown daemon needs to check all of them.
+sub _action_daemon
+{
+	my $self = shift;
+	
+	if (!fork())
+	{
+		my $cfg = $self->{Parent}->getConfig()->configRef();
+		my $playerinfo = $self->{Parent}->getPlayers()->getInfo();
+		ddump($playerinfo, "playerinfo");
+	}
+	else
+	{
+		exit(0);
+	}
+	
+	return "";
+}
 
 sub _action_start
 {
@@ -122,6 +144,7 @@ sub new
 
 	bless($self, $class);
 	$self->{config} = (defined($conf{ConfigHashRef}) ? $conf{ConfigHashRef} : { %conf });
+	$self->{Parent} = $conf{ParentObj};
 
 	return $self->_init();
 }
