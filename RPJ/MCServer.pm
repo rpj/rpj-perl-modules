@@ -105,6 +105,11 @@ sub getInfo
 	return ((!defined($args{type}) || $args{refOK}) ? $stats : $self->SUPER::genOutput(type => $args{type}, data => $stats));
 }
 
+sub getConfig
+{
+	return (shift)->{ConfigObj};
+}
+
 sub getManager
 {
 	my $self = shift;

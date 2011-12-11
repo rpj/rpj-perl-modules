@@ -3,6 +3,7 @@ package RPJ::MCServer::Players;
 use RPJ::MCServer::Defaults;
 use RPJ::MCServer::Outputer;
 use RPJ::Debug qw(pdebug ddump);
+use RPJ::Util;
 use parent 'RPJ::MCServer::Outputer';
 use strict;
 use warnings;
@@ -109,6 +110,7 @@ sub _parsePlayerStats
 				$user->{'longestSession'} = $dur, if (!defined($user->{'longestSession'}) || $dur > $user->{'longestSession'});
 
 				$self->{m}->{ahash}->{'disconnects'}->{'proper'}++;
+				push(@{$self->{m}->{thash}->{loginDurations}}, $dur);
 			}
 			else {
 				print STDERR "Mismatch for user $3 at logout time '$1 $2':\n\t[$self->{m}->{LOG_FILE}:$lc] $line\n";
@@ -129,6 +131,9 @@ sub _parsePlayerStats
 
 		++$lc;
 	}
+	
+	$self->{m}->{ahash}->{loginDurations}->{mean} = mean($self->{m}->{thash}->{loginDurations});
+	$self->{m}->{ahash}->{loginDurations}->{stdDev} = sampleStdDev($self->{m}->{thash}->{loginDurations});
 
 	# second pass
 	foreach my $un (sort(keys(%{$self->{m}->{uhash}}))) {
