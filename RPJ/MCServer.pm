@@ -1,11 +1,13 @@
 package RPJ::MCServer;
 
+use RPJ::MCServer::Defaults;
+use RPJ::MCServer::Outputer;
+use parent 'RPJ::MCServer::Outputer';
+use RPJ::MCServer::Config;
+use RPJ::Debug qw(pdebug ddump);
 use strict;
 use warnings;
 use Exporter qw(import);
-use RPJ::MCServer::Defaults;
-use RPJ::MCServer::Config;
-use RPJ::Debug qw(pdebug ddump);
 
 our @EXPORT = qw();
 
@@ -109,7 +111,9 @@ sub getManager
 
 	if (!defined($self->{ManagerObj}))
 	{
-		$self->{ManagerObj} = RPJ::MCServer::Manager->new(ConfigHashRef => $self->{config});
+		$self->{ManagerObj} = RPJ::MCServer::Manager->new(
+			ConfigHashRef => $self->{config}, 
+			ParentObj => $self);
 	}
 
 	return $self->{ManagerObj};

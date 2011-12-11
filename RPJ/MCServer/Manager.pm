@@ -5,6 +5,7 @@ use warnings;
 use Exporter qw(import);
 use Net::Telnet ();
 use RPJ::MCServer::Defaults;
+use RPJ::MCServer::Players;
 use RPJ::Debug qw(pdebug ddump);
 
 our @EXPORT = ();
@@ -19,6 +20,19 @@ shell -bash
 chdir <GAMEDIR>
 exec <GAMEDIR>/<GAMESCRIPT>
 __SRCDOC__
+
+sub _action_canshutdown
+{
+	my $self = shift;
+	my $output = "";
+	
+	if ($self->{parent})
+	{
+		my $pinfo = $self->{parent}->getPlayers()->getInfo();
+	}
+
+	return $output;
+}
 
 sub _action_start
 {
@@ -122,6 +136,7 @@ sub new
 
 	bless($self, $class);
 	$self->{config} = (defined($conf{ConfigHashRef}) ? $conf{ConfigHashRef} : { %conf });
+	$self->{parent} = $conf{ParentObj};
 
 	return $self->_init();
 }
