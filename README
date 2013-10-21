@@ -1,0 +1,3 @@
+This is a general collection of Perl modules I've written and have shoved into the RPJ:: namespace.
+
+As it stands currently, the enterity of this project is written to support my custom Minecraft server as hosted on AWS. You can find the implementaiton at http://mc.rpj.me
