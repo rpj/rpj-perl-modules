@@ -18,7 +18,7 @@ my $IP_RX = qr/\[\/[\d\.]+\:\d+\]/;
 my $UNAME_RX = qr/\<?([_0-9\w].*?)\>?/;
 my $DATE_RX = qr/(\d{4}\-\d{2}\-\d{2})\s+(\d{2}:\d{2}:\d{2})/;
 my $USER_INFO_RX = qr/\[INFO\]\s+$UNAME_RX/;
-my $LOGIN_RX = qr/$USER_INFO_RX\s+$IP_RX\s+logged\s+in/;
+my $LOGIN_RX = qr/$USER_INFO_RX\s*$IP_RX\s+logged\s+in/;
 my $LOGOUT_RX = qr/$USER_INFO_RX\s+lost\s+connection:\s+disconnect\.(.*)/;
 my $CHAT_RX = qr/$USER_INFO_RX\s+(.*)/;
 
