@@ -78,6 +78,7 @@ sub _action_canshutdown
 	
 	if ($self->{parent})
 	{
+		use Data::Dumper;
 		my $pinfo = $self->{parent}->getPlayers()->getInfo(forceRef => 1);
 		my $ainfo = $pinfo->{aggregate};
 		my $uinfo = $pinfo->{perUser};
@@ -110,6 +111,12 @@ sub _action_canshutdown
 			
 			foreach my $uname (keys %$uinfo)
 			{
+				if (defined($uinfo->{$uname}->{lastLogin}) && $uinfo->{$uname}->{lastLogin} > 0) {
+                                        $output .= "$uname is logged in now!\n";
+                                        $canshutdown = 0;
+					last;
+                                }
+
 				next, unless (defined($uinfo->{$uname}->{lastSeen}));
 
 				my $durLast = $uinfo->{$uname}->{lastSeen}->{duration};
@@ -128,15 +135,9 @@ sub _action_canshutdown
 					}
 				}
 
-				if ($uinfo->{$uname}->{lastLogin} > 0) {
-					$output .= "$uname is logged in now!\n";
-					$canshutdown = 0;
-				}
-				else {
-					# because of the way $seenLast is calculated, the second condition here
-					# is redundant, I believe. but since I haven't proven that, I'm leaving it here
-					$canshutdown = ($seenLast <= $meanmin && $durLast > $csigmin) ? 0 : 1;
-				}
+				# because of the way $seenLast is calculated, the second condition here
+				# is redundant, I believe. but since I haven't proven that, I'm leaving it here
+				$canshutdown = ($seenLast <= $meanmin && $durLast > $csigmin) ? 0 : 1;
 
 				last, if (!$canshutdown);
 			}

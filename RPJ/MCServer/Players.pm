@@ -60,7 +60,9 @@ sub _sortLeadLists() {
 	foreach my $lKey (keys %{$self->{m}->{ahash}->{'lists'}})
 	{
 		# sorts descending so that the largest val (the leader) is at index 0
-		my @newarr = sort { $b->{'value'} <=> $a->{'value'} } @{$self->{m}->{ahash}->{'lists'}->{$lKey}};
+		my @newarr = sort { defined($a->{value}) && defined($b->{value}) ? 
+					$b->{'value'} <=> $a->{'value'} : 0 } 
+			@{$self->{m}->{ahash}->{'lists'}->{$lKey}};
 		$self->{m}->{ahash}->{'lists'}->{$lKey} = \@newarr;
 	}
 
@@ -141,8 +143,9 @@ sub _parsePlayerStats
 
 		if (defined($uh->{loginCount}) && $uh->{loginCount} > 0)
 		{
-			$uh->{'avgLoggedInTime'} = $uh->{'accumLoggedIn'} / $uh->{loginCount};
-			$self->{m}->{ahash}->{'accumLoggedIn'} += $uh->{'accumLoggedIn'};
+			$uh->{'avgLoggedInTime'} = defined($uh->{'accumLoggedIn'}) && defined($uh->{loginCount}) ? 
+				$uh->{'accumLoggedIn'} / $uh->{loginCount} : 0;
+			$self->{m}->{ahash}->{'accumLoggedIn'} += $uh->{'accumLoggedIn'}, if (defined($uh->{'accumLoggedIn'}));
 			$self->{m}->{ahash}->{'activeUserCount'}++;
 
 			$self->_checkAndSetLeaderboard($uh, 'longestSession', $un);
